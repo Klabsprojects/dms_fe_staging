@@ -2010,8 +2010,36 @@ order.department !== departmentFilter
     )}
   </div>
 </td>
-                   <td className="border border-gray-300 px-4 py-2 text-right text-sm">{item.rate_range}</td>
-
+                   {/* <td className="border border-gray-300 px-4 py-2 text-right text-sm">{item.rate_range}</td> */}
+<td className="border border-gray-300 px-4 py-2 text-right text-sm">
+  {(() => {
+    if (!item.disp_packs) return item.rate_range;
+    
+    const packs = item.disp_packs.split('||');
+    let rates = [];
+    
+    packs.forEach(pack => {
+      const parts = pack.split('>>');
+      const packSize = parseFloat(parts[1]) || 0;
+      
+      if (packSize > 0) {
+        // Packed items: rate is at index 2
+        const rate = parseFloat(parts[2]) || 0;
+        if (rate > 0) {
+          rates.push(`₹${rate}`);
+        }
+      } else if (packSize === 0) {
+        // Loose items: rate is at index 3
+        const rate = parseFloat(parts[3]) || 0;
+        if (rate > 0) {
+          rates.push(`₹${rate}/Kg`);
+        }
+      }
+    });
+    
+    return rates.length > 0 ? rates.join(', ') : item.rate_range;
+  })()}
+</td>
                                 <td className="border border-gray-300 px-4 py-2 text-right">
                                   {Number(item.qty).toFixed(3)}
                                 </td>
@@ -2020,10 +2048,38 @@ order.department !== departmentFilter
                                   (approvedOrders.find(o => o.id === expandedOrder)?.status || '').trim().toLowerCase()
                                 ) && (
                                     <>
-                                      <td className="border border-gray-300 px-4 py-2 text-right">
+                                      {/* <td className="border border-gray-300 px-4 py-2 text-right">
                                         {item.disp_qty ? `${Number(item.disp_qty).toFixed(3)}` : 'N/A'}
-                                      </td>
-
+                                      </td> */}
+<td className="border border-gray-300 px-4 py-2 text-right">
+  {(() => {
+    if (!item.disp_packs) return 'N/A';
+    
+    const packs = item.disp_packs.split('||');
+    let display = [];
+    
+    packs.forEach(pack => {
+      const parts = pack.split('>>');
+      const packSize = parseFloat(parts[1]) || 0;
+      
+      if (packSize > 0) {
+        // Packed items: brand>>packSize>>rate>>numPacks>>gst
+        const numPacks = parseFloat(parts[3]) || 0;
+        if (numPacks > 0) {
+          display.push(`${numPacks} Packs`);
+        }
+      } else if (packSize === 0) {
+        // Loose items: brand>>0>>qty>>rate>>gst
+        const qty = parseFloat(parts[2]) || 0;
+        if (qty > 0) {
+          display.push(`${qty.toFixed(3)} Kg`);
+        }
+      }
+    });
+    
+    return display.join(', ') || 'N/A';
+  })()}
+</td>
                                       <td className="border border-gray-300 px-4 py-2 text-right">
                                         ₹{(item.disp_qty ? item.disp_qty * item.rate : 0).toFixed(3)}
                                       </td>
